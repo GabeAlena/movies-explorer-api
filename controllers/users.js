@@ -93,7 +93,6 @@ module.exports.login = (req, res, next) => {
       res.send({
         token,
       });
-      console.log(token);
     })
     .catch((err) => {
       if (err.name === 'Error') {
