@@ -44,7 +44,7 @@ module.exports.createMovie = (req, res, next) => {
     .then((movie) => res.status(201).send({ data: movie }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        return next(new ValidationError(`Данные некорректны ${err.message}`));
+        throw new ValidationError(`Данные некорректны ${err.message}`);
       }
       return next(err);
     })
@@ -60,14 +60,13 @@ module.exports.deleteMovie = (req, res, next) => {
       } else if (movie.owner.toString() !== req.user._id) {
         throw new Forbidden('Запрещено удалять чужие фильмы!');
       } else {
-        movie.remove();
+        return movie.remove()
+          .then(() => res.status(200).send('Фильм успешно удален'));
       }
     })
-    .then(() => res.send('Фильм успешно удален'))
     .catch((err) => {
       if (err.name === 'ValidationError') {
         next(new ValidationError(`Данные некорректны ${err.message}`));
-        return;
       }
       next(err);
     });

@@ -7,7 +7,6 @@ const User = require('../models/user');
 const ValidationError = require('../errors/ValidationError');
 const NotFound = require('../errors/NotFound');
 const Conflict = require('../errors/Conflict');
-const Unauthorized = require('../errors/Unauthorized');
 
 /* возвращает пользователя */
 module.exports.getUser = (req, res, next) => {
@@ -26,7 +25,7 @@ module.exports.getUser = (req, res, next) => {
 module.exports.updateUser = (req, res, next) => {
   const { email, name } = req.body;
 
-  User.findOneAndUpdate({ email, name }, { new: true, runValidators: true })
+  User.findOneAndUpdate(req.user._id, { email, name }, { new: true, runValidators: true })
     .then((user) => {
       if (!user) {
         throw new NotFound('Запрашиваемый пользователь не найден');
@@ -38,31 +37,23 @@ module.exports.updateUser = (req, res, next) => {
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        next(new ValidationError(`Данные некорректны ${err.message}`));
-        return;
+        throw new ValidationError(`Данные некорректны ${err.message}`);
+      } else if (err.code === 11000) {
+        throw new Conflict('Такой email уже занят, попробуйте другой!');
       }
-      next(err);
-    });
+      throw err;
+    })
+    .catch(next);
 };
 
 /* создание пользователя */
 module.exports.createUser = (req, res, next) => {
-  const {
-    email, password, name,
-  } = req.body;
-
-  User.findOne({ email })
-    .then((user) => {
-      if (user) {
-        throw new Conflict('Такой пользователь уже зарегистрирован');
-      }
-      return bcrypt.hash(password, 10);
-    })
-    .then((hash) => User.create({
-      email,
-      password: hash,
-      name,
-    }))
+  const { email, password, name } = req.body;
+  bcrypt.hash(password, 10).then((hash) => User.create({
+    email,
+    password: hash,
+    name,
+  })
     .then((user) => {
       res.status(201).send({
         name: user.name,
@@ -72,10 +63,13 @@ module.exports.createUser = (req, res, next) => {
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        return next(new ValidationError(`Данные некорректны ${err.message}`));
+        throw new ValidationError(`Данные некорректны ${err.message}`);
+      }
+      if (err.code === 11000) {
+        throw new Conflict('Пользователь с таким email уже зарегистрирован');
       }
       return next(err);
-    })
+    }))
     .catch(next);
 };
 
@@ -94,9 +88,5 @@ module.exports.login = (req, res, next) => {
         token,
       });
     })
-    .catch((err) => {
-      if (err.name === 'Error') {
-        next(new Unauthorized('Неверные почта или пароль'));
-      }
-    });
+    .catch(next);
 };
