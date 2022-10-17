@@ -11,12 +11,20 @@ const Conflict = require('../errors/Conflict');
 /* возвращает пользователя */
 module.exports.getUser = (req, res, next) => {
   const { email, name } = req.body;
-  User.findOne({ email, name })
+  /*User.findOne({ email, name })
     .then((user) => {
       res.send({
         email: user.email,
         name: user.name,
       });
+    })
+    .catch((err) => next(err)); */
+  User.findById(req.user._id)
+    .then((user) => {
+      if (!user) {
+        throw new NotFound('Такого пользователя нет');
+      }
+      return res.send(user);
     })
     .catch((err) => next(err));
 };
