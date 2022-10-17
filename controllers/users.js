@@ -33,6 +33,7 @@ module.exports.updateUser = (req, res, next) => {
       return res.send({
         email: user.email,
         name: user.name,
+        _id: user._id
       });
     })
     .catch((err) => {
