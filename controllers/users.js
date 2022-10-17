@@ -38,11 +38,12 @@ module.exports.updateUser = (req, res, next) => {
       if (!user) {
         throw new NotFound('Запрашиваемый пользователь не найден');
       }
-      return res.send({
+      /*return res.send({
         email: user.email,
         name: user.name,
         _id: user._id
-      });
+      });*/
+      return res.send(user);
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
