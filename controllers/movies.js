@@ -44,7 +44,8 @@ module.exports.createMovie = (req, res, next) => {
     movieId,*/
   })
     //.then((movie) => res.status(201).send({ data: movie }))
-    .then((movie) => res.status(201).send(movie))
+    //.then((movie) => res.status(201).send(movie))
+    .then((movie) => res.send({ movie }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
         throw new ValidationError(`Данные некорректны ${err.message}`);
