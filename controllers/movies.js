@@ -6,8 +6,7 @@ const Forbidden = require('../errors/Forbidden');
 /* возвращает все фильмы */
 module.exports.getMovies = (req, res, next) => {
   Movie.find({ owner: req.user._id })
-    //.then((movies) => res.send({ data: movies }))
-    .then((movie) => res.send(movie))
+    .then((movies) => res.send({ data: movies }))
     .catch((err) => next(err));
 };
 
@@ -44,8 +43,6 @@ module.exports.createMovie = (req, res, next) => {
     movieId,*/
   })
     .then((movie) => res.status(201).send({ data: movie }))
-    //.then((movie) => res.status(201).send(movie))
-    //.then((movie) => res.send({ movie }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
         throw new ValidationError(`Данные некорректны ${err.message}`);
