@@ -6,14 +6,14 @@ const Forbidden = require('../errors/Forbidden');
 /* возвращает все фильмы */
 module.exports.getMovies = (req, res, next) => {
   Movie.find({ owner: req.user._id })
-    .then((movies) => res.send({ data: movies }))
+    .then((movies) => res.send(movies))
     .catch((err) => next(err));
 };
 
 /* создает фильм */
 module.exports.createMovie = (req, res, next) => {
   const owner = req.user._id;
-  /*const {
+  const {
     country,
     director,
     duration,
@@ -25,12 +25,11 @@ module.exports.createMovie = (req, res, next) => {
     nameEN,
     thumbnail,
     movieId,
-  } = req.body;*/
+  } = req.body;
 
   Movie.create({
     owner,
-    ...req.body,
-    /*country,
+    country,
     director,
     duration,
     year,
@@ -40,9 +39,9 @@ module.exports.createMovie = (req, res, next) => {
     nameRU,
     nameEN,
     thumbnail,
-    movieId,*/
+    movieId,
   })
-    .then((movie) => res.status(201).send({ data: movie }))
+    .then((movie) => res.status(201).send(movie))
     .catch((err) => {
       if (err.name === 'ValidationError') {
         throw new ValidationError(`Данные некорректны ${err.message}`);
