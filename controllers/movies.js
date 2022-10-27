@@ -62,13 +62,15 @@ module.exports.deleteMovie = (req, res, next) => {
         throw new NotFound('Запрашиваемый фильм не найден');
       } else if (movie.owner.toString() !== userId) {
         throw new Forbidden('Запрещено удалять чужие фильмы!');
-      } else {
-        /*return movie.remove()
-          .then(() => res.status(200).send('Фильм успешно удален'));*/
+      }/* else {
+        return movie.remove()
+          .then(() => res.status(200).send('Фильм успешно удален'));
         Movie.findByIdAndRemove(movieId)
-          .then(() => res.send('Фильм успешно удален')); 
-      }
+          .then(() => res.send('Фильм успешно удален'));
+      }*/
+      return movie;
     })
+    .then((movie) => movie.delete())
     .catch((err) => {
       if (err.name === 'ValidationError') {
         next(new ValidationError(`Данные некорректны ${err.message}`));
