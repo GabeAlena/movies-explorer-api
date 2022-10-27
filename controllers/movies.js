@@ -71,6 +71,7 @@ module.exports.deleteMovie = (req, res, next) => {
       return movie;
     })
     .then((movie) => movie.delete())
+    .then((movie) => res.send(movie))
     .catch((err) => {
       if (err.name === 'ValidationError') {
         next(new ValidationError(`Данные некорректны ${err.message}`));
