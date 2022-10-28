@@ -33,18 +33,8 @@ module.exports.getUser = (req, res, next) => {
 module.exports.updateUser = (req, res, next) => {
   const { email, name } = req.body;
 
-  User.findOneAndUpdate(req.user._id, { email, name }, { new: true, runValidators: true })
-    .then((user) => {
-      if (!user) {
-        throw new NotFound('Запрашиваемый пользователь не найден');
-      }
-      /*return res.send({
-        email: user.email,
-        name: user.name,
-        _id: user._id
-      });*/
-      return res.send(user);
-    })
+  User.findByIdAndUpdate(req.user._id, { email, name }, { new: true, runValidators: true })
+    .then((user) => res.send(user))
     .catch((err) => {
       if (err.name === 'ValidationError') {
         throw new ValidationError(`Данные некорректны ${err.message}`);
@@ -59,7 +49,42 @@ module.exports.updateUser = (req, res, next) => {
 /* создание пользователя */
 module.exports.createUser = (req, res, next) => {
   const { email, password, name } = req.body;
-  bcrypt.hash(password, 10).then((hash) => User.create({
+
+  if (!password || !email) {
+    throw new ValidationError('почта или пароль должны быть заполнены');
+  }
+
+  User.findOne({ email })
+    .then((user) => {
+      if (user) {
+        throw new Conflict('Пользователь с таким email уже зарегистрирован');
+      } else {
+        bcrypt.hash(password, 10)
+          .then((hash) => User.create({
+            name,
+            email,
+            password: hash,
+          }))
+          .then((userData) => res.send({
+            name: userData.name,
+            id: userData._id,
+            email: userData.email,
+          }))
+          .catch((err) => {
+            if (err.name === 'ValidationError') {
+              next(new ValidationError(`Данные некорректны ${err.message}`));
+            }
+            if (err.code === 11000) {
+              next(new Conflict('Пользователь с таким email уже зарегистрирован'));
+            }
+            next(err);
+          });
+      }
+    })
+    .catch((err) => {
+      next(err);
+    });
+  /*bcrypt.hash(password, 10).then((hash) => User.create({
     email,
     password: hash,
     name,
@@ -80,7 +105,7 @@ module.exports.createUser = (req, res, next) => {
       }
       return next(err);
     }))
-    .catch(next);
+    .catch(next);*/
 };
 
 /* контроллер, который получает из запроса почту и пароль и проверяет их (возвращает JWT) */
@@ -94,9 +119,13 @@ module.exports.login = (req, res, next) => {
         NODE_ENV === 'production' ? JWT_SECRET : 'SECRET_KEY',
         { expiresIn: '7d' },
       );
-      res.send({
+      const userData = {
+        name: user.name,
+        email: user.email,
+        _id: user._id,
         token,
-      });
+      }
+      return res.send(userData);
     })
     .catch(next);
 };
